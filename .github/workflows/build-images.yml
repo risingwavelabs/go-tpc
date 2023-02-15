@@ -21,7 +21,7 @@ jobs:
       uses: docker/metadata-action@v4
       with:
         images: |
-          ghcr.io/risingwavelabs/risingwave-sysbench
+          ghcr.io/risingwavelabs/go-tpc
         tags: |
           type=schedule,prefix=nightly-,pattern={{date 'YYYYMMDD'}}
           type=ref,event=branch
