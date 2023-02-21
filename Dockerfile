@@ -17,6 +17,8 @@ RUN GOOS=linux GOARCH=$TARGETARCH make build
 
 FROM ubuntu:22.04
 
+RUN apt-get update -yy && DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-client mysql-client
+
 COPY --from=builder /workspace/bin/go-tpc /go-tpc
 
 ENTRYPOINT [ "/go-tpc" ]
