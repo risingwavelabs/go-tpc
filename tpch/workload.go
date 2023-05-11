@@ -209,27 +209,6 @@ func (w *Workloader) Run(ctx context.Context, threadID int) error {
 
 	queryName := w.cfg.QueryNames[s.queryIdx%len(w.cfg.QueryNames)]
 	query := query(w.cfg.Driver, queryName)
-
-	if queryName == "q15" {
-		_, err := w.db.Exec(`create view revenue0 (supplier_no, total_revenue) as
-	select
-		l_suppkey,
-		sum(l_extendedprice * (1 - l_discount))
-	from
-		lineitem
-	where
-		l_shipdate >= '1997-07-01'
-		and l_shipdate < date_add('1997-07-01', interval '3' month)
-	group by
-		l_suppkey;`)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			w.db.Exec("drop view revenue0;")
-		}()
-	}
-
 	// only for driver == mysql and EnablePlanReplayer == true
 	if w.cfg.EnablePlanReplayer && w.cfg.Driver == "mysql" {
 		w.dumpPlanReplayer(ctx, s, query, queryName)
@@ -240,22 +219,18 @@ func (w *Workloader) Run(ctx context.Context, threadID int) error {
 	}
 	start := time.Now()
 	rows, err := s.Conn.QueryContext(ctx, query)
-	if err != nil {
-		return fmt.Errorf("execute query %s failed %v", query, err)
-	}
-	defer rows.Close()
-	w.measurement.Measure(queryName, time.Now().Sub(start), err)
-
+	defer w.measurement.Measure(queryName, time.Now().Sub(start), err)
 	if err != nil {
 		return fmt.Errorf("execute %s failed %v", queryName, err)
 	}
+	defer rows.Close()
 
 	if w.cfg.ExecExplainAnalyze {
 		table, err := util.RenderExplainAnalyze(rows)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stderr, "explain analyze result of query %s:\n%s\n", queryName, table)
+		util.StdErrLogger.Printf("explain analyze result of query %s (takes %s):\n%s\n", queryName, time.Now().Sub(start), table)
 		return nil
 	}
 	if err := w.scanQueryResult(queryName, rows); err != nil {
@@ -336,4 +311,12 @@ func (w *Workloader) PreparePlanReplayerDump() error {
 
 func (w *Workloader) FinishPlanReplayerDump() error {
 	return w.PlanReplayerRunner.Finish()
+}
+
+func (w *Workloader) Exec(sql string) error {
+	_, err := w.db.Exec(sql)
+	if err != nil {
+		return err
+	}
+	return nil
 }
