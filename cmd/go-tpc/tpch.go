@@ -14,12 +14,13 @@ import (
 var tpchConfig tpch.Config
 
 func executeTpch(action string) {
-	openDB()
-	defer closeDB()
-
-	if globalDB == nil {
-		util.StdErrLogger.Printf("cannot connect to the database")
-		os.Exit(1)
+	if !(tpchConfig.OutputType == "csv" || tpchConfig.OutputType == "kafka") {
+		openDB()
+		defer closeDB()
+		if globalDB == nil {
+			util.StdErrLogger.Printf("cannot connect to the database")
+			os.Exit(1)
+		}
 	}
 
 	tpchConfig.PlanReplayerConfig.Host = hosts[0]
@@ -102,6 +103,11 @@ func registerTpch(root *cobra.Command) {
 		"output-dir",
 		"",
 		"Output directory for generating file if specified")
+	cmdPrepare.PersistentFlags().StringVar(&tpchConfig.KafkaAddr,
+		"kafka-addr",
+		"",
+		"Kafka address",
+	)
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",

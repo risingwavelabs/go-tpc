@@ -3,6 +3,7 @@ package tpch
 import (
 	"context"
 	"database/sql"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/pingcap/go-tpc/pkg/sink"
 	"github.com/pingcap/go-tpc/tpch/dbgen"
@@ -179,6 +180,16 @@ func NewOrderLoader(ctx context.Context, db *sql.DB, concurrency int) *orderLoad
 				`INSERT INTO orders (O_ORDERKEY, O_CUSTKEY, O_ORDERSTATUS, O_TOTALPRICE, O_ORDERDATE, O_ORDERPRIORITY, O_CLERK, O_SHIPPRIORITY, O_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
 }
+
+func NewKafkaOrderLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *orderLoader {
+	cols := []string{"O_ORDERKEY", "O_CUSTKEY", "O_ORDERSTATUS", "O_TOTALPRICE", "O_ORDERDATE", "O_ORDERPRIORITY", "O_CLERK", "O_SHIPPRIORITY", "O_COMMENT"}
+	return &orderLoader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("orders", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
+}
+
 func NewLineItemLoader(ctx context.Context, db *sql.DB, concurrency int) *lineItemloader {
 	return &lineItemloader{sqlLoader{
 		sink.NewConcurrentSink(func(idx int) sink.Sink {
@@ -186,6 +197,16 @@ func NewLineItemLoader(ctx context.Context, db *sql.DB, concurrency int) *lineIt
 				`INSERT INTO lineitem (L_ORDERKEY, L_PARTKEY, L_SUPPKEY, L_LINENUMBER, L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_SHIPDATE, L_COMMITDATE, L_RECEIPTDATE, L_SHIPINSTRUCT, L_SHIPMODE, L_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
 }
+
+func NewKafkaLineItemLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *lineItemloader {
+	cols := []string{"L_ORDERKEY", "L_PARTKEY", "L_SUPPKEY", "L_LINENUMBER", "L_QUANTITY", "L_EXTENDEDPRICE", "L_DISCOUNT", "L_TAX", "L_RETURNFLAG", "L_LINESTATUS", "L_SHIPDATE", "L_COMMITDATE", "L_RECEIPTDATE", "L_SHIPINSTRUCT", "L_SHIPMODE", "L_COMMENT"}
+	return &lineItemloader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("lineitem", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
+}
+
 func NewCustLoader(ctx context.Context, db *sql.DB, concurrency int) *custLoader {
 	return &custLoader{sqlLoader{
 		sink.NewConcurrentSink(func(idx int) sink.Sink {
@@ -193,6 +214,16 @@ func NewCustLoader(ctx context.Context, db *sql.DB, concurrency int) *custLoader
 				`INSERT INTO customer (C_CUSTKEY, C_NAME, C_ADDRESS, C_NATIONKEY, C_PHONE, C_ACCTBAL, C_MKTSEGMENT, C_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
 }
+
+func NewKafkaCustLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *custLoader {
+	cols := []string{"C_CUSTKEY", "C_NAME", "C_ADDRESS", "C_NATIONKEY", "C_PHONE", "C_ACCTBAL", "C_MKTSEGMENT", "C_COMMENT"}
+	return &custLoader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("customer", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
+}
+
 func NewPartLoader(ctx context.Context, db *sql.DB, concurrency int) *partLoader {
 	return &partLoader{sqlLoader{
 		sink.NewConcurrentSink(func(idx int) sink.Sink {
@@ -200,6 +231,16 @@ func NewPartLoader(ctx context.Context, db *sql.DB, concurrency int) *partLoader
 				`INSERT INTO part (P_PARTKEY, P_NAME, P_MFGR, P_BRAND, P_TYPE, P_SIZE, P_CONTAINER, P_RETAILPRICE, P_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
 }
+
+func NewKafkaPartLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *partLoader {
+	cols := []string{"P_PARTKEY", "P_NAME", "P_MFGR", "P_BRAND", "P_TYPE", "P_SIZE", "P_CONTAINER", "P_RETAILPRICE", "P_COMMENT"}
+	return &partLoader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("part", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
+}
+
 func NewPartSuppLoader(ctx context.Context, db *sql.DB, concurrency int) *partSuppLoader {
 	return &partSuppLoader{sqlLoader{
 		sink.NewConcurrentSink(func(idx int) sink.Sink {
@@ -207,6 +248,16 @@ func NewPartSuppLoader(ctx context.Context, db *sql.DB, concurrency int) *partSu
 				`INSERT INTO partsupp (PS_PARTKEY, PS_SUPPKEY, PS_AVAILQTY, PS_SUPPLYCOST, PS_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
 }
+
+func NewKafkaPartSuppLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *partSuppLoader {
+	cols := []string{"PS_PARTKEY", "PS_SUPPKEY", "PS_AVAILQTY", "PS_SUPPLYCOST", "PS_COMMENT"}
+	return &partSuppLoader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("partsupp", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
+}
+
 func NewSuppLoader(ctx context.Context, db *sql.DB, concurrency int) *suppLoader {
 	return &suppLoader{sqlLoader{
 		sink.NewConcurrentSink(func(idx int) sink.Sink {
@@ -214,6 +265,16 @@ func NewSuppLoader(ctx context.Context, db *sql.DB, concurrency int) *suppLoader
 				`INSERT INTO supplier (S_SUPPKEY, S_NAME, S_ADDRESS, S_NATIONKEY, S_PHONE, S_ACCTBAL, S_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
 }
+
+func NewKafkaSuppLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *suppLoader {
+	cols := []string{"S_SUPPKEY", "S_NAME", "S_ADDRESS", "S_NATIONKEY", "S_PHONE", "S_ACCTBAL", "S_COMMENT"}
+	return &suppLoader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("supplier", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
+}
+
 func NewNationLoader(ctx context.Context, db *sql.DB, concurrency int) *nationLoader {
 	return &nationLoader{sqlLoader{
 		sink.NewConcurrentSink(func(idx int) sink.Sink {
@@ -221,10 +282,29 @@ func NewNationLoader(ctx context.Context, db *sql.DB, concurrency int) *nationLo
 				`INSERT INTO nation (N_NATIONKEY, N_NAME, N_REGIONKEY, N_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
 }
+
+func NewKafkaNationLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *nationLoader {
+	cols := []string{"N_NATIONKEY", "N_NAME", "N_REGIONKEY", "N_COMMENT"}
+	return &nationLoader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("nation", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
+}
+
 func NewRegionLoader(ctx context.Context, db *sql.DB, concurrency int) *regionLoader {
 	return &regionLoader{sqlLoader{
 		sink.NewConcurrentSink(func(idx int) sink.Sink {
 			return sink.NewSQLSink(db,
 				`INSERT INTO region (R_REGIONKEY, R_NAME, R_COMMENT) VALUES `, 0, 0)
 		}, concurrency), ctx}}
+}
+
+func NewKafkaRegionLoader(ctx context.Context, producer *kafka.Producer, concurrency int) *regionLoader {
+	cols := []string{"R_REGIONKEY", "R_NAME", "R_COMMENT"}
+	return &regionLoader{sqlLoader{
+		sink.NewConcurrentSink(func(idx int) sink.Sink {
+			return sink.NewKafkaSink("region", producer, idx, cols)
+		}, concurrency), ctx,
+	}}
 }

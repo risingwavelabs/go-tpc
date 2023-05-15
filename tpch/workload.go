@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"os"
 	"path"
 	"sort"
@@ -51,6 +52,7 @@ type Config struct {
 
 	// output style
 	OutputStyle string
+	KafkaAddr   string
 }
 
 type tpchState struct {
@@ -111,6 +113,9 @@ func (w *Workloader) InitThread(ctx context.Context, threadID int) context.Conte
 // CleanupThread cleans up thread
 func (w *Workloader) CleanupThread(ctx context.Context, threadID int) {
 	s := w.getState(ctx)
+	if w.cfg.OutputType == "kafka" {
+		return
+	}
 	s.Conn.Close()
 }
 
@@ -119,8 +124,14 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 	if threadID != 0 {
 		return nil
 	}
-	if err := w.createTables(ctx); err != nil {
-		return err
+	if w.cfg.OutputType == "kafka" {
+		if err := util.CreateTopics(ctx, w.cfg.KafkaAddr, allTables, w.cfg.PrepareThreads); err != nil {
+			return err
+		}
+	} else {
+		if err := w.createTables(ctx); err != nil {
+			return err
+		}
 	}
 	var sqlLoader map[dbgen.Table]dbgen.Loader
 	if w.cfg.OutputType == "csv" {
@@ -143,6 +154,29 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 			dbgen.TNation: dbgen.NewNationLoader(util.CreateFile(path.Join(w.cfg.OutputDir, fmt.Sprintf("%s.nation.csv", w.DBName())))),
 			dbgen.TRegion: dbgen.NewRegionLoader(util.CreateFile(path.Join(w.cfg.OutputDir, fmt.Sprintf("%s.region.csv", w.DBName())))),
 		}
+	} else if w.cfg.OutputType == "kafka" {
+		producer, err := kafka.NewProducer(&kafka.ConfigMap{
+			"bootstrap.servers":            w.cfg.KafkaAddr,
+			"go.batch.producer":            true,
+			"queue.buffering.max.messages": 5_000_000,
+			"queue.buffering.max.kbytes":   5_000_000,
+			"queue.buffering.max.ms":       "150",
+			"go.delivery.reports":          false,
+		})
+		if err != nil {
+			return err
+		}
+		defer producer.Close()
+		sqlLoader = map[dbgen.Table]dbgen.Loader{
+			dbgen.TOrder:  NewKafkaOrderLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TLine:   NewKafkaLineItemLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TPart:   NewKafkaPartLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TPsupp:  NewKafkaPartSuppLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TSupp:   NewKafkaSuppLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TCust:   NewKafkaCustLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TNation: NewKafkaNationLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TRegion: NewKafkaRegionLoader(ctx, producer, w.cfg.PrepareThreads),
+		}
 	} else {
 		sqlLoader = map[dbgen.Table]dbgen.Loader{
 			dbgen.TOrder:  NewOrderLoader(ctx, w.db, w.cfg.PrepareThreads),
@@ -157,7 +191,7 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 	}
 
 	dbgen.InitDbGen(int64(w.cfg.ScaleFactor))
-	if err := dbgen.DbGen(sqlLoader, []dbgen.Table{dbgen.TNation, dbgen.TRegion, dbgen.TCust, dbgen.TSupp, dbgen.TPartPsupp, dbgen.TOrderLine}); err != nil {
+	if err := dbgen.DbGen(sqlLoader, []dbgen.Table{dbgen.TNation, dbgen.TRegion, dbgen.TCust, dbgen.TSupp, dbgen.TPartPsupp, dbgen.TOrder}); err != nil {
 		return err
 	}
 
@@ -243,6 +277,9 @@ func (w *Workloader) Run(ctx context.Context, threadID int) error {
 func (w *Workloader) Cleanup(ctx context.Context, threadID int) error {
 	if threadID != 0 {
 		return nil
+	}
+	if w.cfg.OutputType == "kafka" {
+		return util.DeleteTopics(ctx, w.cfg.KafkaAddr, allTables)
 	}
 	return w.dropTable(ctx)
 }
