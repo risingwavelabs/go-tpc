@@ -89,6 +89,5 @@ func (k *KafkaSink) Flush(ctx context.Context) error {
 
 func (k *KafkaSink) Close(ctx context.Context) error {
 	k.producer.Flush(10 * 1000)
-	//k.producer.Close()
 	return nil
 }
