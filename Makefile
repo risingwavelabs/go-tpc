@@ -1,6 +1,5 @@
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
-#GO=GO15VENDOREXPERIMENT="1" CGO_ENABLED=0 GOARCH=$(GOARCH) GO111MODULE=on go
 GO := GOOS=$(OS) GOARCH=$(ARCH) GO111MODULE=on go
 
 PACKAGE_LIST  := go list ./...| grep -vE "cmd"
@@ -40,7 +39,7 @@ mod:
 	@git diff --exit-code -- go.sum go.mod
 
 docker-build: test
-	docker build . -t ${IMG}
+	docker build . -t ${IMG} --build-arg TARGETARCH=$(ARCH)
 
 docker-push: docker-build
 	docker push ${IMG}
