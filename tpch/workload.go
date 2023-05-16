@@ -191,7 +191,7 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 	}
 
 	dbgen.InitDbGen(int64(w.cfg.ScaleFactor))
-	if err := dbgen.DbGen(sqlLoader, []dbgen.Table{dbgen.TNation, dbgen.TRegion, dbgen.TCust, dbgen.TSupp, dbgen.TPartPsupp, dbgen.TOrder}); err != nil {
+	if err := dbgen.DbGen(sqlLoader, []dbgen.Table{dbgen.TNation, dbgen.TRegion, dbgen.TCust, dbgen.TSupp, dbgen.TPart, dbgen.TPartPsupp, dbgen.TOrder, dbgen.TLine}); err != nil {
 		return err
 	}
 
@@ -356,4 +356,8 @@ func (w *Workloader) Exec(sql string) error {
 		return err
 	}
 	return nil
+}
+
+func (w *Workloader) createTopics(ctx context.Context) error {
+	return util.CreateTopics(ctx, w.cfg.KafkaAddr, allTables, w.cfg.PrepareThreads)
 }
