@@ -12,7 +12,7 @@ import (
 type KafkaSink struct {
 	topic               string
 	partition           int32
-	producer            *kafka.Producer
+	producers           []*kafka.Producer
 	keys                []string
 	count               int
 	maxFlushMsgCount    int
@@ -21,12 +21,12 @@ type KafkaSink struct {
 
 var _ Sink = &KafkaSink{}
 
-func NewKafkaSink(topic string, producer *kafka.Producer, partition, flushTimeoutSeconds, maxFlushMsgCount int, keys []string) *KafkaSink {
+func NewKafkaSink(topic string, producers []*kafka.Producer, partition, flushTimeoutSeconds, maxFlushMsgCount int, keys []string) *KafkaSink {
 	return &KafkaSink{
 		partition:           int32(partition),
 		topic:               topic,
 		keys:                keys,
-		producer:            producer,
+		producers:           producers,
 		maxFlushMsgCount:    maxFlushMsgCount,
 		flushTimeoutSeconds: flushTimeoutSeconds,
 	}
@@ -75,10 +75,10 @@ func buildJsonRow(keys []string, values []interface{}) ([]byte, error) {
 func (k *KafkaSink) produce(msg []byte) error {
 	k.count++
 	if k.count >= k.maxFlushMsgCount {
-		k.producer.Flush(10 * 1000)
+		k.producers[k.partition].Flush(10 * 1000)
 		k.count = 0
 	}
-	return k.producer.Produce(&kafka.Message{
+	return k.producers[k.partition].Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &k.topic, Partition: k.partition},
 		Value:          msg,
 	}, nil)
@@ -93,11 +93,11 @@ func (k *KafkaSink) WriteRow(ctx context.Context, values ...interface{}) error {
 }
 
 func (k *KafkaSink) Flush(ctx context.Context) error {
-	k.producer.Flush(k.flushTimeoutSeconds * 1000)
+	k.producers[k.partition].Flush(k.flushTimeoutSeconds * 1000)
 	return nil
 }
 
 func (k *KafkaSink) Close(ctx context.Context) error {
-	k.producer.Flush(k.flushTimeoutSeconds * 1000)
+	k.producers[k.partition].Flush(k.flushTimeoutSeconds * 1000)
 	return nil
 }
