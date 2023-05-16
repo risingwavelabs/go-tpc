@@ -5,10 +5,10 @@ import (
 	"fmt"
 )
 
-var allTables []string
+var AllTables []string
 
 func init() {
-	allTables = []string{"lineitem", "partsupp", "supplier", "part", "orders", "customer", "region", "nation"}
+	AllTables = []string{"lineitem", "partsupp", "supplier", "part", "orders", "customer", "region", "nation"}
 }
 
 func (w *Workloader) createTableDDL(ctx context.Context, query string, tableName string, action string) error {
@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS supplier (
 func (w *Workloader) dropTable(ctx context.Context) error {
 	s := w.getState(ctx)
 
-	for _, tbl := range allTables {
+	for _, tbl := range AllTables {
 		fmt.Printf("DROP TABLE IF EXISTS %s\n", tbl)
 		if _, err := s.Conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", tbl)); err != nil {
 			return err
