@@ -2,7 +2,7 @@ package util
 
 import (
 	"context"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"time"
 )
 

@@ -3,7 +3,7 @@ package tpch
 import (
 	"context"
 	"database/sql"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	"github.com/pingcap/go-tpc/pkg/sink"
 	"github.com/pingcap/go-tpc/tpch/dbgen"
