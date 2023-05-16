@@ -155,8 +155,8 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 			dbgen.TRegion: dbgen.NewRegionLoader(util.CreateFile(path.Join(w.cfg.OutputDir, fmt.Sprintf("%s.region.csv", w.DBName())))),
 		}
 	} else if w.cfg.OutputType == "kafka" {
-		producers := make([]*kafka.Producer, len(AllTables))
-		for i := 0; i < len(AllTables); i++ {
+		producers := make([]*kafka.Producer, w.cfg.PrepareThreads)
+		for i := 0; i < w.cfg.PrepareThreads; i++ {
 			producer, err := kafka.NewProducer(&kafka.ConfigMap{
 				"bootstrap.servers":            w.cfg.KafkaAddr,
 				"go.batch.producer":            true,
@@ -172,14 +172,14 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 			defer producers[i].Close()
 		}
 		sqlLoader = map[dbgen.Table]dbgen.Loader{
-			dbgen.TOrder:  NewKafkaOrderLoader(ctx, producers[0], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
-			dbgen.TLine:   NewKafkaLineItemLoader(ctx, producers[1], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
-			dbgen.TPart:   NewKafkaPartLoader(ctx, producers[2], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
-			dbgen.TPsupp:  NewKafkaPartSuppLoader(ctx, producers[3], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
-			dbgen.TSupp:   NewKafkaSuppLoader(ctx, producers[4], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
-			dbgen.TCust:   NewKafkaCustLoader(ctx, producers[5], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
-			dbgen.TNation: NewKafkaNationLoader(ctx, producers[6], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
-			dbgen.TRegion: NewKafkaRegionLoader(ctx, producers[7], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TOrder:  NewKafkaOrderLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TLine:   NewKafkaLineItemLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TPart:   NewKafkaPartLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TPsupp:  NewKafkaPartSuppLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TSupp:   NewKafkaSuppLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TCust:   NewKafkaCustLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TNation: NewKafkaNationLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TRegion: NewKafkaRegionLoader(ctx, producers, w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
 		}
 	} else {
 		sqlLoader = map[dbgen.Table]dbgen.Loader{
