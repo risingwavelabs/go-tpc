@@ -52,7 +52,11 @@ type Config struct {
 
 	// output style
 	OutputStyle string
-	KafkaAddr   string
+
+	// kafka
+	KafkaAddr                string
+	KafkaFlushMsgCount       int
+	KafkaFlushTimeoutSeconds int
 }
 
 type tpchState struct {
@@ -151,27 +155,31 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 			dbgen.TRegion: dbgen.NewRegionLoader(util.CreateFile(path.Join(w.cfg.OutputDir, fmt.Sprintf("%s.region.csv", w.DBName())))),
 		}
 	} else if w.cfg.OutputType == "kafka" {
-		producer, err := kafka.NewProducer(&kafka.ConfigMap{
-			"bootstrap.servers":            w.cfg.KafkaAddr,
-			"go.batch.producer":            true,
-			"queue.buffering.max.messages": 5_000_000,
-			"queue.buffering.max.kbytes":   5_000_000,
-			"queue.buffering.max.ms":       "150",
-			"go.delivery.reports":          false,
-		})
-		if err != nil {
-			return err
+		producers := make([]*kafka.Producer, len(AllTables))
+		for i := 0; i < len(AllTables); i++ {
+			producer, err := kafka.NewProducer(&kafka.ConfigMap{
+				"bootstrap.servers":            w.cfg.KafkaAddr,
+				"go.batch.producer":            true,
+				"queue.buffering.max.messages": 5_000_000,
+				"queue.buffering.max.kbytes":   5_000_000,
+				"queue.buffering.max.ms":       "150",
+				"go.delivery.reports":          false,
+			})
+			if err != nil {
+				return err
+			}
+			producers[i] = producer
+			defer producers[i].Close()
 		}
-		defer producer.Close()
 		sqlLoader = map[dbgen.Table]dbgen.Loader{
-			dbgen.TOrder:  NewKafkaOrderLoader(ctx, producer, w.cfg.PrepareThreads),
-			dbgen.TLine:   NewKafkaLineItemLoader(ctx, producer, w.cfg.PrepareThreads),
-			dbgen.TPart:   NewKafkaPartLoader(ctx, producer, w.cfg.PrepareThreads),
-			dbgen.TPsupp:  NewKafkaPartSuppLoader(ctx, producer, w.cfg.PrepareThreads),
-			dbgen.TSupp:   NewKafkaSuppLoader(ctx, producer, w.cfg.PrepareThreads),
-			dbgen.TCust:   NewKafkaCustLoader(ctx, producer, w.cfg.PrepareThreads),
-			dbgen.TNation: NewKafkaNationLoader(ctx, producer, w.cfg.PrepareThreads),
-			dbgen.TRegion: NewKafkaRegionLoader(ctx, producer, w.cfg.PrepareThreads),
+			dbgen.TOrder:  NewKafkaOrderLoader(ctx, producers[0], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TLine:   NewKafkaLineItemLoader(ctx, producers[1], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TPart:   NewKafkaPartLoader(ctx, producers[2], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TPsupp:  NewKafkaPartSuppLoader(ctx, producers[3], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TSupp:   NewKafkaSuppLoader(ctx, producers[4], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TCust:   NewKafkaCustLoader(ctx, producers[5], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TNation: NewKafkaNationLoader(ctx, producers[6], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
+			dbgen.TRegion: NewKafkaRegionLoader(ctx, producers[7], w.cfg.PrepareThreads, w.cfg.KafkaFlushTimeoutSeconds, w.cfg.KafkaFlushMsgCount),
 		}
 	} else {
 		sqlLoader = map[dbgen.Table]dbgen.Loader{

@@ -122,6 +122,16 @@ func registerTpch(root *cobra.Command) {
 		"",
 		"Kafka address",
 	)
+	cmdPrepare.PersistentFlags().IntVar(&tpchConfig.KafkaFlushMsgCount,
+		"kafka-flush-msg-count",
+		500000,
+		"kafka producer flush msg count",
+	)
+	cmdPrepare.PersistentFlags().IntVar(&tpchConfig.KafkaFlushTimeoutSeconds,
+		"kafka-flush-timeout-seconds",
+		20,
+		"kafka flush timeout seconds",
+	)
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",
