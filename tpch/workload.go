@@ -124,11 +124,7 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 	if threadID != 0 {
 		return nil
 	}
-	if w.cfg.OutputType == "kafka" {
-		if err := util.CreateTopics(ctx, w.cfg.KafkaAddr, allTables, w.cfg.PrepareThreads); err != nil {
-			return err
-		}
-	} else {
+	if w.cfg.OutputType != "kafka" {
 		if err := w.createTables(ctx); err != nil {
 			return err
 		}
@@ -207,7 +203,7 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 func (w *Workloader) analyzeTables(ctx context.Context, acfg analyzeConfig) error {
 	s := w.getState(ctx)
 	if w.cfg.Driver == "mysql" {
-		for _, tbl := range allTables {
+		for _, tbl := range AllTables {
 			fmt.Printf("analyzing table %s\n", tbl)
 			if _, err := s.Conn.ExecContext(ctx, fmt.Sprintf("SET @@session.tidb_build_stats_concurrency=%d; SET @@session.tidb_distsql_scan_concurrency=%d; SET @@session.tidb_index_serial_scan_concurrency=%d; ANALYZE TABLE %s", acfg.BuildStatsConcurrency, acfg.DistsqlScanConcurrency, acfg.IndexSerialScanConcurrency, tbl)); err != nil {
 				return err
@@ -215,7 +211,7 @@ func (w *Workloader) analyzeTables(ctx context.Context, acfg analyzeConfig) erro
 			fmt.Printf("analyze table %s done\n", tbl)
 		}
 	} else if w.cfg.Driver == "postgres" {
-		for _, tbl := range allTables {
+		for _, tbl := range AllTables {
 			fmt.Printf("analyzing %s\n", tbl)
 			if _, err := s.Conn.ExecContext(ctx, fmt.Sprintf("ANALYZE %s", tbl)); err != nil {
 				return err
@@ -279,7 +275,7 @@ func (w *Workloader) Cleanup(ctx context.Context, threadID int) error {
 		return nil
 	}
 	if w.cfg.OutputType == "kafka" {
-		return util.DeleteTopics(ctx, w.cfg.KafkaAddr, allTables)
+		return nil
 	}
 	return w.dropTable(ctx)
 }
@@ -356,8 +352,4 @@ func (w *Workloader) Exec(sql string) error {
 		return err
 	}
 	return nil
-}
-
-func (w *Workloader) createTopics(ctx context.Context) error {
-	return util.CreateTopics(ctx, w.cfg.KafkaAddr, allTables, w.cfg.PrepareThreads)
 }

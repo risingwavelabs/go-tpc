@@ -47,5 +47,6 @@ func DeleteTopics(ctx context.Context, kafkaAddr string, tables []string) error 
 	for _, result := range results {
 		StdErrLogger.Printf("delete topic result: %s", result.String())
 	}
+	time.Sleep(1 * time.Second)
 	return nil
 }

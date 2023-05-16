@@ -31,6 +31,20 @@ func executeTpch(action string) {
 	tpchConfig.DBName = dbName
 	tpchConfig.PrepareThreads = threads
 	tpchConfig.QueryNames = strings.Split(tpchConfig.RawQueries, ",")
+	if action == "prepare" && tpchConfig.OutputType == "kafka" {
+		if dropData {
+			err := util.DeleteTopics(globalCtx, tpchConfig.KafkaAddr, tpch.AllTables)
+			if err != nil {
+				util.StdErrLogger.Printf("failed to delete topics")
+				os.Exit(1)
+			}
+		}
+		err := util.CreateTopics(globalCtx, tpchConfig.KafkaAddr, tpch.AllTables, tpchConfig.PrepareThreads)
+		if err != nil {
+			util.StdErrLogger.Printf("failed to create topics")
+			os.Exit(1)
+		}
+	}
 	w := tpch.NewWorkloader(globalDB, &tpchConfig)
 	timeoutCtx, cancel := context.WithTimeout(globalCtx, totalTime)
 	defer cancel()
