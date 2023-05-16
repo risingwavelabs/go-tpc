@@ -4,14 +4,14 @@ go 1.18
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.0
-	github.com/confluentinc/confluent-kafka-go v1.9.2
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.1.1
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/lib/pq v1.10.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.15.0
-	github.com/spf13/cobra v1.0.0
-	github.com/stretchr/testify v1.8.0
+	github.com/spf13/cobra v1.1.3
+	github.com/stretchr/testify v1.8.2
 	go.uber.org/atomic v1.9.0
 	golang.org/x/sync v0.1.0
 )

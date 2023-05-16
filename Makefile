@@ -1,6 +1,7 @@
-GOARCH := $(if $(GOARCH),$(GOARCH),amd64)
+OS ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
 #GO=GO15VENDOREXPERIMENT="1" CGO_ENABLED=0 GOARCH=$(GOARCH) GO111MODULE=on go
-GO := go
+GO := GOOS=$(OS) GOARCH=$(ARCH) GO111MODULE=on go
 
 PACKAGE_LIST  := go list ./...| grep -vE "cmd"
 PACKAGES  := $$($(PACKAGE_LIST))
