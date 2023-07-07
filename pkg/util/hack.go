@@ -1,9 +1,7 @@
 package util
 
 import (
-	"os"
 	"reflect"
-	"strings"
 	"unsafe"
 )
 
@@ -29,12 +27,4 @@ func Slice(s string) (b []byte) {
 	pbytes.Len = pstring.Len
 	pbytes.Cap = pstring.Len
 	return
-}
-
-// VarcharOnly converts char to varchar if ENV VAR VARCHAR_ONLY=true
-func VarcharOnly(query string) string {
-	if os.Getenv("VARCHAR_ONLY") == "true" {
-		return strings.Replace(strings.Replace(query, " CHAR", " VARCHAR", -1), " char", " varchar", -1)
-	}
-	return query
 }
