@@ -3,6 +3,7 @@ package ch
 import (
 	"context"
 	"fmt"
+	"github.com/pingcap/go-tpc/pkg/util"
 )
 
 var allTables []string
@@ -23,31 +24,31 @@ func (w *Workloader) createTableDDL(ctx context.Context, query string, tableName
 
 // createTables creates tables schema.
 func (w *Workloader) createTables(ctx context.Context) error {
-	query := `
+	query := util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS nation (
     N_NATIONKEY BIGINT NOT NULL,
     N_NAME CHAR(25) NOT NULL,
     N_REGIONKEY BIGINT NOT NULL,
     N_COMMENT VARCHAR(152),
     PRIMARY KEY (N_NATIONKEY)
-)`
+)`)
 
 	if err := w.createTableDDL(ctx, query, "nation", "creating"); err != nil {
 		return err
 	}
 
-	query = `
+	query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS region (
     R_REGIONKEY BIGINT NOT NULL,
     R_NAME CHAR(25) NOT NULL,
     R_COMMENT VARCHAR(152),
     PRIMARY KEY (R_REGIONKEY)
-)`
+)`)
 	if err := w.createTableDDL(ctx, query, "region", "creating"); err != nil {
 		return err
 	}
 
-	query = `
+	query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS supplier (
     S_SUPPKEY BIGINT NOT NULL,
     S_NAME CHAR(25) NOT NULL,
@@ -57,7 +58,7 @@ CREATE TABLE IF NOT EXISTS supplier (
     S_ACCTBAL DECIMAL(15, 2) NOT NULL,
     S_COMMENT VARCHAR(101) NOT NULL,
     PRIMARY KEY (S_SUPPKEY)
-)`
+)`)
 	if err := w.createTableDDL(ctx, query, "supplier", "creating"); err != nil {
 		return err
 	}

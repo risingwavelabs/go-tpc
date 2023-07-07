@@ -255,7 +255,7 @@ where	ol_i_id = t.i_id
   and ol_quantity < t.a;
 `
 	q18 = `
-/*PLACEHOLDER*/ /*q18*/select	 c_last, c_id o_id, o_entry_d, o_ol_cnt, sum(ol_amount)
+/*PLACEHOLDER*/ /*q18*/select	 c_last, c_id, o_id, o_entry_d, o_ol_cnt, sum(ol_amount) 
 from	 customer, orders, order_line
 where	 c_id = o_c_id
   and c_w_id = o_w_id

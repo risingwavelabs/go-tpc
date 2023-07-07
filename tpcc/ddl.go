@@ -3,6 +3,7 @@ package tpcc
 import (
 	"context"
 	"fmt"
+	"github.com/pingcap/go-tpc/pkg/util"
 )
 
 const (
@@ -115,7 +116,7 @@ func (w *ddlManager) appendPartition(query string, partKeys string) string {
 func (w *ddlManager) createTables(ctx context.Context, driver string) error {
 	if driver == "mysql" {
 		// Warehouse
-		query := `
+		query := util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS warehouse (
 	w_id INT NOT NULL,
 	w_name VARCHAR(10),
@@ -127,7 +128,7 @@ CREATE TABLE IF NOT EXISTS warehouse (
 	w_tax DECIMAL(4, 4),
 	w_ytd DECIMAL(12, 2),
 	PRIMARY KEY (w_id) /*T![clustered_index] CLUSTERED */
-)`
+)`)
 
 		query = w.appendPartition(query, "w_id")
 
@@ -136,7 +137,7 @@ CREATE TABLE IF NOT EXISTS warehouse (
 		}
 
 		// District
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS district (
 	d_id INT NOT NULL,
 	d_w_id INT NOT NULL,
@@ -150,7 +151,7 @@ CREATE TABLE IF NOT EXISTS district (
 	d_ytd DECIMAL(12, 2),
 	d_next_o_id INT,
 	PRIMARY KEY (d_w_id, d_id) /*T![clustered_index] CLUSTERED */
-)`
+)`)
 
 		query = w.appendPartition(query, "d_w_id")
 
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS district (
 		}
 
 		// Customer
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS customer (
 	c_id INT NOT NULL, 
 	c_d_id INT NOT NULL,
@@ -184,7 +185,7 @@ CREATE TABLE IF NOT EXISTS customer (
 	c_data VARCHAR(500),
 	PRIMARY KEY(c_w_id, c_d_id, c_id) /*T![clustered_index] CLUSTERED */,
 	INDEX idx_customer (c_w_id, c_d_id, c_last, c_first)
-)`
+)`)
 
 		query = w.appendPartition(query, "c_w_id")
 
@@ -192,7 +193,7 @@ CREATE TABLE IF NOT EXISTS customer (
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS history (
 	h_c_id INT NOT NULL,
 	h_c_d_id INT NOT NULL,
@@ -204,7 +205,7 @@ CREATE TABLE IF NOT EXISTS history (
 	h_data VARCHAR(24),
 	INDEX idx_h_w_id (h_w_id),
 	INDEX idx_h_c_w_id (h_c_w_id)
-)`
+)`)
 
 		query = w.appendPartition(query, "h_w_id")
 
@@ -212,13 +213,13 @@ CREATE TABLE IF NOT EXISTS history (
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS new_order (
 	no_o_id INT NOT NULL,
 	no_d_id INT NOT NULL,
 	no_w_id INT NOT NULL,
 	PRIMARY KEY(no_w_id, no_d_id, no_o_id) /*T![clustered_index] CLUSTERED */
-)`
+)`)
 
 		query = w.appendPartition(query, "no_w_id")
 		if err := w.createTableDDL(ctx, query, tableNewOrder); err != nil {
@@ -226,7 +227,7 @@ CREATE TABLE IF NOT EXISTS new_order (
 		}
 
 		// because order is a keyword, so here we use orders instead
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS orders (
 	o_id INT NOT NULL,
 	o_d_id INT NOT NULL,
@@ -238,14 +239,14 @@ CREATE TABLE IF NOT EXISTS orders (
 	o_all_local INT,
 	PRIMARY KEY(o_w_id, o_d_id, o_id) /*T![clustered_index] CLUSTERED */,
 	INDEX idx_order (o_w_id, o_d_id, o_c_id, o_id)
-)`
+)`)
 
 		query = w.appendPartition(query, "o_w_id")
 		if err := w.createTableDDL(ctx, query, tableOrders); err != nil {
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 	CREATE TABLE IF NOT EXISTS order_line (
 		ol_o_id INT NOT NULL,
 		ol_d_id INT NOT NULL,
@@ -258,14 +259,14 @@ CREATE TABLE IF NOT EXISTS orders (
 		ol_amount DECIMAL(6, 2),
 		ol_dist_info CHAR(24),
 		PRIMARY KEY(ol_w_id, ol_d_id, ol_o_id, ol_number) /*T![clustered_index] CLUSTERED */
-)`
+)`)
 
 		query = w.appendPartition(query, "ol_w_id")
 		if err := w.createTableDDL(ctx, query, tableOrderLine); err != nil {
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS stock (
 	s_i_id INT NOT NULL,
 	s_w_id INT NOT NULL,
@@ -285,14 +286,14 @@ CREATE TABLE IF NOT EXISTS stock (
 	s_remote_cnt INT,
 	s_data VARCHAR(50),
 	PRIMARY KEY(s_w_id, s_i_id) /*T![clustered_index] CLUSTERED */
-)`
+)`)
 
 		query = w.appendPartition(query, "s_w_id")
 		if err := w.createTableDDL(ctx, query, tableStock); err != nil {
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS item (
 	i_id INT NOT NULL,
 	i_im_id INT,
@@ -300,7 +301,7 @@ CREATE TABLE IF NOT EXISTS item (
 	i_price DECIMAL(5, 2),
 	i_data VARCHAR(50),
 	PRIMARY KEY(i_id) /*T![clustered_index] CLUSTERED */
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableItem); err != nil {
 			return err
@@ -317,7 +318,7 @@ CREATE TABLE IF NOT EXISTS item (
 
 	} else if driver == "postgres" {
 		// Warehouse
-		query := `
+		query := util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS warehouse (
 	w_id INT NOT NULL,
 	w_name VARCHAR(10),
@@ -329,14 +330,14 @@ CREATE TABLE IF NOT EXISTS warehouse (
 	w_tax DECIMAL(4, 4),
 	w_ytd DECIMAL(12, 2),
 	PRIMARY KEY (w_id)
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableWareHouse); err != nil {
 			return err
 		}
 
 		// District
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS district (
 	d_id INT NOT NULL,
 	d_w_id INT NOT NULL,
@@ -350,14 +351,14 @@ CREATE TABLE IF NOT EXISTS district (
 	d_ytd DECIMAL(12, 2),
 	d_next_o_id INT,
 	PRIMARY KEY (d_w_id, d_id)
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableDistrict); err != nil {
 			return err
 		}
 
 		// Customer
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS customer (
 	c_id INT NOT NULL, 
 	c_d_id INT NOT NULL,
@@ -381,7 +382,7 @@ CREATE TABLE IF NOT EXISTS customer (
 	c_delivery_cnt INT, 
 	c_data VARCHAR(500),
 	PRIMARY KEY(c_w_id, c_d_id, c_id)
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableCustomer); err != nil {
 			return err
@@ -390,7 +391,7 @@ CREATE TABLE IF NOT EXISTS customer (
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS history (
 	h_c_id INT NOT NULL,
 	h_c_d_id INT NOT NULL,
@@ -400,7 +401,7 @@ CREATE TABLE IF NOT EXISTS history (
 	h_date TIMESTAMP,
 	h_amount DECIMAL(6, 2),
 	h_data VARCHAR(24)
-)`
+)`)
 		if err := w.createTableDDL(ctx, query, tableHistory); err != nil {
 			return err
 		}
@@ -412,20 +413,20 @@ CREATE TABLE IF NOT EXISTS history (
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS new_order (
 	no_o_id INT NOT NULL,
 	no_d_id INT NOT NULL,
 	no_w_id INT NOT NULL,
 	PRIMARY KEY(no_w_id, no_d_id, no_o_id)
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableNewOrder); err != nil {
 			return err
 		}
 
 		// because order is a keyword, so here we use orders instead
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS orders (
 	o_id INT NOT NULL,
 	o_d_id INT NOT NULL,
@@ -436,7 +437,7 @@ CREATE TABLE IF NOT EXISTS orders (
 	o_ol_cnt INT,
 	o_all_local INT,
 	PRIMARY KEY(o_w_id, o_d_id, o_id)
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableOrders); err != nil {
 			return err
@@ -446,7 +447,7 @@ CREATE TABLE IF NOT EXISTS orders (
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 	CREATE TABLE IF NOT EXISTS order_line (
 		ol_o_id INT NOT NULL,
 		ol_d_id INT NOT NULL,
@@ -459,13 +460,13 @@ CREATE TABLE IF NOT EXISTS orders (
 		ol_amount DECIMAL(6, 2),
 		ol_dist_info CHAR(24),
 		PRIMARY KEY(ol_w_id, ol_d_id, ol_o_id, ol_number)
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableOrderLine); err != nil {
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS stock (
 	s_i_id INT NOT NULL,
 	s_w_id INT NOT NULL,
@@ -485,13 +486,13 @@ CREATE TABLE IF NOT EXISTS stock (
 	s_remote_cnt INT,
 	s_data VARCHAR(50),
 	PRIMARY KEY(s_w_id, s_i_id)
-)`
+)`)
 
 		if err := w.createTableDDL(ctx, query, tableStock); err != nil {
 			return err
 		}
 
-		query = `
+		query = util.VarcharOnly(`
 CREATE TABLE IF NOT EXISTS item (
 	i_id INT NOT NULL,
 	i_im_id INT,
@@ -499,7 +500,7 @@ CREATE TABLE IF NOT EXISTS item (
 	i_price DECIMAL(5, 2),
 	i_data VARCHAR(50),
 	PRIMARY KEY(i_id)
-)`
+)`)
 		if err := w.createTableDDL(ctx, query, tableItem); err != nil {
 			return err
 		}
