@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS history (
 	h_data VARCHAR(24),
 	INDEX idx_h_w_id (h_w_id),
 	INDEX idx_h_c_w_id (h_c_w_id),
-    PRIMARY KEY(h_c_id, h_d_id, h_w_id, h_data)
+	PRIMARY KEY(h_c_id, h_d_id, h_w_id, h_data)
 )`
 
 		query = w.appendPartition(query, "h_w_id")
@@ -401,7 +401,7 @@ CREATE TABLE IF NOT EXISTS history (
 	h_date TIMESTAMP,
 	h_amount DECIMAL(6, 2),
 	h_data VARCHAR(24),
-    PRIMARY KEY(h_c_id, h_d_id, h_w_id, h_data)
+	PRIMARY KEY(h_c_id, h_d_id, h_w_id, h_data)
 )`
 		if err := w.createTableDDL(ctx, query, tableHistory); err != nil {
 			return err
