@@ -44,6 +44,12 @@ type Config struct {
 
 	// output style
 	OutputStyle string
+
+	// only ddl
+	OnlyDdl bool
+
+	// skip ddl
+	SkipDdl bool
 }
 
 type chState struct {
@@ -114,20 +120,28 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 	}
 	s := w.getState(ctx)
 
-	if err := w.createTables(ctx); err != nil {
-		return err
+	if !w.cfg.SkipDdl {
+		if err := w.createTables(ctx); err != nil {
+			return err
+		}
+
+		if err := w.prepareView(ctx); err != nil {
+			return err
+		}
 	}
+
+	if w.cfg.OnlyDdl {
+		return nil
+	}
+
 	sqlLoader := map[dbgen.Table]dbgen.Loader{
 		dbgen.TSupp:   tpch.NewSuppLoader(ctx, w.db, 1),
 		dbgen.TNation: tpch.NewNationLoader(ctx, w.db, 1),
 		dbgen.TRegion: tpch.NewRegionLoader(ctx, w.db, 1),
 	}
+
 	dbgen.InitDbGen(1)
 	if err := dbgen.DbGen(sqlLoader, []dbgen.Table{dbgen.TNation, dbgen.TRegion, dbgen.TSupp}); err != nil {
-		return err
-	}
-
-	if err := w.prepareView(ctx); err != nil {
 		return err
 	}
 
