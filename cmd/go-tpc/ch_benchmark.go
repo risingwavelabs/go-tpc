@@ -66,6 +66,14 @@ func registerCHBenchmark(root *cobra.Command) {
 		"tidb_index_serial_scan_concurrency",
 		1,
 		"tidb_index_serial_scan_concurrency param for analyze jobs")
+	cmdPrepare.PersistentFlags().BoolVar(&chConfig.OnlyDdl,
+		"only-ddl",
+		false,
+		"ch prepare only ddl (default false)")
+	cmdPrepare.PersistentFlags().BoolVar(&chConfig.SkipDdl,
+		"skip-ddl",
+		false,
+		"ch prepare skip ddl (default false)")
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",

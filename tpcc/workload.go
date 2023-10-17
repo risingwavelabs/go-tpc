@@ -84,6 +84,12 @@ type Config struct {
 
 	// output style
 	OutputStyle string
+
+	// only ddl
+	OnlyDdl bool
+
+	// skip ddl
+	SkipDdl bool
 }
 
 // Workloader is TPCC workload
@@ -205,16 +211,20 @@ func (w *Workloader) CleanupThread(ctx context.Context, threadID int) {
 
 // Prepare implements Workloader interface
 func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
-	if w.db != nil {
-		if threadID == 0 {
-			if err := w.ddlManager.createTables(ctx, w.cfg.Driver); err != nil {
-				return err
+	if !w.cfg.SkipDdl {
+		if w.db != nil {
+			if threadID == 0 {
+				if err := w.ddlManager.createTables(ctx, w.cfg.Driver); err != nil {
+					return err
+				}
 			}
+			w.createTableWg.Done()
+			w.createTableWg.Wait()
 		}
-		w.createTableWg.Done()
-		w.createTableWg.Wait()
 	}
-
+	if w.cfg.OnlyDdl {
+		return nil
+	}
 	return prepareWorkload(ctx, w, w.cfg.Threads, w.cfg.Warehouses, threadID)
 }
 

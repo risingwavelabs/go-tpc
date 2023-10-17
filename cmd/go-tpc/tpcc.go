@@ -102,6 +102,8 @@ func registerTpcc(root *cobra.Command) {
 		"generating file, separated by ','. Valid only if output is set. If this flag is not set, generate all tables by default")
 	cmdPrepare.PersistentFlags().IntVar(&tpccConfig.PrepareRetryCount, "retry-count", 50, "Retry count when errors occur")
 	cmdPrepare.PersistentFlags().DurationVar(&tpccConfig.PrepareRetryInterval, "retry-interval", 10*time.Second, "The interval for each retry")
+	cmdPrepare.PersistentFlags().BoolVar(&tpccConfig.OnlyDdl, "only-ddl", false, "TPCC prepare ddl only (default false)")
+	cmdPrepare.PersistentFlags().BoolVar(&tpccConfig.SkipDdl, "skip-ddl", false, "TPCC prepare skip ddl (default false)")
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",
