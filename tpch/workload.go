@@ -132,7 +132,7 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 	if threadID != 0 {
 		return nil
 	}
-	if w.cfg.OutputType != "kafka" && !w.cfg.SkipDdl{
+	if w.cfg.OutputType != "kafka" && !w.cfg.SkipDdl {
 		if err := w.createTables(ctx); err != nil {
 			return err
 		}
