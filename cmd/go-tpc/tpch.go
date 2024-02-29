@@ -132,6 +132,16 @@ func registerTpch(root *cobra.Command) {
 		20,
 		"kafka flush timeout seconds",
 	)
+	cmdPrepare.PersistentFlags().BoolVar(&tpchConfig.SkipDdl,
+		"skip-ddl",
+		false,
+		"tpch prepare skip ddl (default false)",
+	)
+	cmdPrepare.PersistentFlags().BoolVar(&tpchConfig.OnlyDdl,
+		"only-ddl",
+		false,
+		"tpch prepare only ddl (default false)",
+	)
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",

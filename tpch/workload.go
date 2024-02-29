@@ -57,6 +57,10 @@ type Config struct {
 	KafkaAddr                string
 	KafkaFlushMsgCount       int
 	KafkaFlushTimeoutSeconds int
+
+	// DDL
+	SkipDdl bool
+	OnlyDdl bool
 }
 
 type tpchState struct {
@@ -128,11 +132,16 @@ func (w *Workloader) Prepare(ctx context.Context, threadID int) error {
 	if threadID != 0 {
 		return nil
 	}
-	if w.cfg.OutputType != "kafka" {
+	if w.cfg.OutputType != "kafka" && !w.cfg.SkipDdl{
 		if err := w.createTables(ctx); err != nil {
 			return err
 		}
 	}
+
+	if w.cfg.OnlyDdl {
+		return nil
+	}
+
 	var sqlLoader map[dbgen.Table]dbgen.Loader
 	if w.cfg.OutputType == "csv" {
 		if _, err := os.Stat(w.cfg.OutputDir); err != nil {
