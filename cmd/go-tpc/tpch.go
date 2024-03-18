@@ -30,6 +30,8 @@ func executeTpch(action string) {
 	tpchConfig.Driver = driver
 	tpchConfig.DBName = dbName
 	tpchConfig.PrepareThreads = threads
+	tpchConfig.OnlyDdl = onlyDdl
+	tpchConfig.SkipDdl = skipDdl
 	tpchConfig.QueryNames = strings.Split(tpchConfig.RawQueries, ",")
 	if action == "prepare" && tpchConfig.OutputType == "kafka" {
 		if dropData {
@@ -131,16 +133,6 @@ func registerTpch(root *cobra.Command) {
 		"kafka-flush-timeout-seconds",
 		20,
 		"kafka flush timeout seconds",
-	)
-	cmdPrepare.PersistentFlags().BoolVar(&tpchConfig.SkipDdl,
-		"skip-ddl",
-		false,
-		"tpch prepare skip ddl (default false)",
-	)
-	cmdPrepare.PersistentFlags().BoolVar(&tpchConfig.OnlyDdl,
-		"only-ddl",
-		false,
-		"tpch prepare only ddl (default false)",
 	)
 
 	var cmdRun = &cobra.Command{

@@ -47,6 +47,9 @@ var (
 	connParams     string
 	outputStyle    string
 	targets        []string
+	skipDdl		bool
+	onlyDdl bool
+	risingwave bool
 
 	globalDB  *sql.DB
 	globalCtx context.Context
@@ -209,6 +212,9 @@ func main() {
 	rootCmd.PersistentFlags().StringVar(&outputStyle, "output", util.OutputStylePlain, "output style, valid values can be { plain | table | json }")
 	rootCmd.PersistentFlags().StringSliceVar(&targets, "targets", nil, "Target database addresses")
 	rootCmd.PersistentFlags().MarkHidden("targets")
+	rootCmd.PersistentFlags().BoolVar(&skipDdl, "skip-ddl", false, "Skip DDL operations")
+	rootCmd.PersistentFlags().BoolVar(&onlyDdl, "only-ddl", false, "Only DDL operations")
+	rootCmd.PersistentFlags().BoolVar(&risingwave, "risingwave", false, "Convert DDL to support RisingWave")
 
 	cobra.EnablePrefixMatching = true
 

@@ -41,6 +41,7 @@ func execute(timeoutCtx context.Context, w workload.Workloader, action string, t
 	count := totalCount / threads
 
 	ctx := w.InitThread(context.Background(), index)
+	ctx = context.WithValue(ctx, "risingwave", risingwave)
 	defer w.CleanupThread(ctx, index)
 
 	switch action {
