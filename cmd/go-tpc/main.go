@@ -47,10 +47,9 @@ var (
 	connParams     string
 	outputStyle    string
 	targets        []string
-	skipDdl		bool
-	onlyDdl bool
-	risingwave bool
-
+	skipDdl        bool
+	onlyDdl        bool
+	risingwave     bool
 	globalDB  *sql.DB
 	globalCtx context.Context
 )
