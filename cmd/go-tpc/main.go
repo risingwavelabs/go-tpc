@@ -50,8 +50,8 @@ var (
 	skipDdl        bool
 	onlyDdl        bool
 	risingwave     bool
-	globalDB  *sql.DB
-	globalCtx context.Context
+	globalDB       *sql.DB
+	globalCtx      context.Context
 )
 
 const (
