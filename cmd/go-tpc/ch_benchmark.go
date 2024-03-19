@@ -66,14 +66,6 @@ func registerCHBenchmark(root *cobra.Command) {
 		"tidb_index_serial_scan_concurrency",
 		1,
 		"tidb_index_serial_scan_concurrency param for analyze jobs")
-	cmdPrepare.PersistentFlags().BoolVar(&chConfig.OnlyDdl,
-		"only-ddl",
-		false,
-		"ch prepare only ddl (default false)")
-	cmdPrepare.PersistentFlags().BoolVar(&chConfig.SkipDdl,
-		"skip-ddl",
-		false,
-		"ch prepare skip ddl (default false)")
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",
@@ -134,9 +126,13 @@ func executeCH(action string, openAP func() (*sql.DB, error)) {
 	tpccConfig.DBName = dbName
 	tpccConfig.Threads = threads
 	tpccConfig.Isolation = isolationLevel
+	tpccConfig.SkipDdl = skipDdl
+	tpccConfig.OnlyDdl = onlyDdl
 	chConfig.OutputStyle = outputStyle
 	chConfig.Driver = driver
 	chConfig.DBName = dbName
+	chConfig.OnlyDdl = onlyDdl
+	chConfig.SkipDdl = skipDdl
 	chConfig.QueryNames = strings.Split(chConfig.RawQueries, ",")
 	if action == "run" {
 		chConfig.PlanReplayerConfig.Host = apHosts[0]

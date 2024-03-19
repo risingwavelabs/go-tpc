@@ -3,6 +3,7 @@ package tpcc
 import (
 	"context"
 	"fmt"
+	"github.com/pingcap/go-tpc/pkg/util"
 )
 
 const (
@@ -31,6 +32,9 @@ func newDDLManager(parts int, useFK bool, warehouses, partitionType int) *ddlMan
 func (w *ddlManager) createTableDDL(ctx context.Context, query string, tableName string) error {
 	s := getTPCCState(ctx)
 	fmt.Printf("creating table %s\n", tableName)
+	if ctx.Value("risingwave") != nil && ctx.Value("risingwave").(bool) {
+		query = util.ConvertToRisingWaveDDL(query)
+	}
 	if _, err := s.Conn.ExecContext(ctx, query); err != nil {
 		return err
 	}

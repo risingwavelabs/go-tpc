@@ -3,6 +3,7 @@ package tpch
 import (
 	"context"
 	"fmt"
+	"github.com/pingcap/go-tpc/pkg/util"
 )
 
 var AllTables []string
@@ -14,6 +15,9 @@ func init() {
 func (w *Workloader) createTableDDL(ctx context.Context, query string, tableName string, action string) error {
 	s := w.getState(ctx)
 	fmt.Printf("%s %s\n", action, tableName)
+	if ctx.Value("risingwave") != nil && ctx.Value("risingwave").(bool) {
+		query = util.ConvertToRisingWaveDDL(query)
+	}
 	if _, err := s.Conn.ExecContext(ctx, query); err != nil {
 		return err
 	}
